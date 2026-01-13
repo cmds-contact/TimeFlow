@@ -1,0 +1,99 @@
+name: TimeFlow
+options:
+  bundleIdPrefix: com.tagg.timeflow
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    ENABLE_PREVIEWS: YES
+
+packages:
+  PersistableTimer:
+    url: https://github.com/Ryu0118/swift-persistable-timer
+    from: 0.7.0
+
+targets:
+  TimeFlow:
+    type: application
+    platform: macOS
+    sources:
+      - path: TimeFlow
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - package: PersistableTimer
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tagg.timeflow
+        PRODUCT_NAME: TimeFlow
+        INFOPLIST_FILE: TimeFlow/App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: TimeFlow/App/TimeFlow.entitlements
+        DEVELOPMENT_ASSET_PATHS: ""
+    info:
+      path: TimeFlow/App/Info.plist
+      properties:
+        CFBundleName: TimeFlow
+        CFBundleDisplayName: TimeFlow
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "1.0"
+        CFBundlePackageType: APPL
+        CFBundleExecutable: $(EXECUTABLE_NAME)
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSHumanReadableCopyright: "Copyright 2025 Tagg. All rights reserved."
+        LSApplicationCategoryType: public.app-category.productivity
+
+  TimeFlowTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/UnitTests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: TimeFlow
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tagg.timeflow.tests
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/TimeFlow.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TimeFlow
+        GENERATE_INFOPLIST_FILE: YES
+
+  TimeFlowUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: Tests/UITests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: TimeFlow
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tagg.timeflow.uitests
+        TEST_TARGET_NAME: TimeFlow
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  TimeFlow:
+    build:
+      targets:
+        TimeFlow: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - TimeFlowTests
+        - TimeFlowUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
