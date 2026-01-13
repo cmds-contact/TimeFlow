@@ -49,7 +49,10 @@ struct TimelineGridView: View {
                             block: block,
                             hourHeight: hourHeight,
                             baseDate: date,
-                            isDragging: draggedBlock?.id == block.id
+                            isDragging: draggedBlock?.id == block.id,
+                            onResizeEnd: { edge, offset in
+                                handleResize(block: block, edge: edge, offset: offset)
+                            }
                         )
                         .offset(draggedBlock?.id == block.id ? dragOffset : .zero)
                         .onTapGesture {
@@ -98,6 +101,29 @@ struct TimelineGridView: View {
                 draggedBlock = nil
                 dragOffset = .zero
             }
+    }
+
+    // MARK: - Resize Handling
+
+    private func handleResize(block: PlanBlockModel, edge: ResizeHandle.Edge, offset: CGFloat) {
+        let minutesOffset = Int(offset / (hourHeight / 60))
+        var newStartAt = block.startAt
+        var newEndAt = block.endAt
+
+        switch edge {
+        case .top:
+            newStartAt = block.startAt.adding(minutes: minutesOffset)
+        case .bottom:
+            newEndAt = block.endAt.adding(minutes: minutesOffset)
+        }
+
+        let newSlot = TimeSlot(startAt: newStartAt, endAt: newEndAt)
+            .rounded(toMinutes: 15)
+
+        // 최소 15분 유지
+        guard newSlot.durationMinutes >= 15 else { return }
+
+        onBlockResize(block, newSlot)
     }
 }
 

@@ -6,6 +6,7 @@ struct PlanBlockView: View {
     let hourHeight: Double
     let baseDate: Date
     let isDragging: Bool
+    var onResizeEnd: ((ResizeHandle.Edge, CGFloat) -> Void)?
 
     @State private var isHovered = false
     @State private var isResizing = false
@@ -80,17 +81,31 @@ struct PlanBlockView: View {
 
     @ViewBuilder
     private var resizeHandles: some View {
-        if isHovered {
+        if isHovered || isResizing {
             VStack {
                 // Top handle
-                ResizeHandle()
-                    .offset(x: 58, y: yPosition)
+                ResizeHandle(
+                    edge: .top,
+                    onDragChanged: { _ in isResizing = true },
+                    onDragEnded: { offset in
+                        isResizing = false
+                        onResizeEnd?(.top, offset)
+                    }
+                )
+                .offset(x: 58, y: yPosition)
 
                 Spacer()
 
                 // Bottom handle
-                ResizeHandle()
-                    .offset(x: 58, y: yPosition + height - 6)
+                ResizeHandle(
+                    edge: .bottom,
+                    onDragChanged: { _ in isResizing = true },
+                    onDragEnded: { offset in
+                        isResizing = false
+                        onResizeEnd?(.bottom, offset)
+                    }
+                )
+                .offset(x: 58, y: yPosition + height - 6)
             }
         }
     }
@@ -99,12 +114,28 @@ struct PlanBlockView: View {
 // MARK: - Resize Handle
 
 struct ResizeHandle: View {
+    enum Edge { case top, bottom }
+
+    let edge: Edge
+    let onDragChanged: (CGFloat) -> Void
+    let onDragEnded: (CGFloat) -> Void
+
     var body: some View {
         RoundedRectangle(cornerRadius: 2)
             .fill(Color.accentColor)
             .frame(width: 40, height: 6)
             .opacity(0.6)
             .padding(.leading, 20)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        onDragChanged(value.translation.height)
+                    }
+                    .onEnded { value in
+                        onDragEnded(value.translation.height)
+                    }
+            )
     }
 }
 
