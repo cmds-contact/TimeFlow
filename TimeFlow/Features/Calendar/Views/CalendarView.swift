@@ -168,14 +168,23 @@ struct CalendarView: View {
     }
 
     private func createBlock(at slot: TimeSlot) {
-        // Quick create with default title
+        // Quick create with default title based on display mode
         do {
-            _ = try appEnvironment.useCases.createPlanBlock.execute(
-                date: selectedDate,
-                startAt: slot.startAt,
-                endAt: slot.endAt,
-                title: "New Block"
-            )
+            switch displayMode {
+            case .actualOnly:
+                _ = try appEnvironment.useCases.createActualBlock.execute(
+                    startAt: slot.startAt,
+                    endAt: slot.endAt,
+                    title: "New Block"
+                )
+            case .planOnly, .overlay:
+                _ = try appEnvironment.useCases.createPlanBlock.execute(
+                    date: selectedDate,
+                    startAt: slot.startAt,
+                    endAt: slot.endAt,
+                    title: "New Block"
+                )
+            }
         } catch {
             print("Error creating block: \(error)")
         }
