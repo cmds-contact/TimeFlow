@@ -11,6 +11,7 @@ struct CalendarView: View {
     @State private var isCreatingBlock = false
     @State private var editingBlock: PlanBlockModel?
     @State private var dragState: DragState = .idle
+    @State private var currentError: TimelineError?
 
     // Query plan blocks for selected date
     @Query private var allPlanBlocks: [PlanBlockModel]
@@ -33,42 +34,56 @@ struct CalendarView: View {
     }
 
     var body: some View {
-        HSplitView {
-            // Main timeline
-            VStack(spacing: 0) {
-                // Toolbar
-                calendarToolbar
+        ZStack(alignment: .top) {
+            HSplitView {
+                // Main timeline
+                VStack(spacing: 0) {
+                    // Toolbar
+                    calendarToolbar
 
-                Divider()
+                    Divider()
 
-                // Timeline grid
-                ScrollView {
-                    TimelineGridView(
-                        date: selectedDate,
-                        planBlocks: displayMode == .actualOnly ? [] : planBlocks,
-                        actualBlocks: displayMode == .planOnly ? [] : actualBlocks,
-                        displayMode: displayMode,
-                        hourHeight: appEnvironment.userSettings.hourHeight,
-                        onBlockTap: { block in
-                            editingBlock = block
-                        },
-                        onEmptySlotTap: { slot in
-                            createBlock(at: slot)
-                        },
-                        onBlockMove: { block, newSlot in
-                            moveBlock(block, to: newSlot)
-                        },
-                        onBlockResize: { block, newSlot in
-                            resizeBlock(block, to: newSlot)
-                        }
-                    )
+                    // Timeline grid
+                    ScrollView {
+                        TimelineGridView(
+                            date: selectedDate,
+                            planBlocks: displayMode == .actualOnly ? [] : planBlocks,
+                            actualBlocks: displayMode == .planOnly ? [] : actualBlocks,
+                            displayMode: displayMode,
+                            hourHeight: appEnvironment.userSettings.hourHeight,
+                            onBlockTap: { block in
+                                editingBlock = block
+                            },
+                            onEmptySlotTap: { slot in
+                                createBlock(at: slot)
+                            },
+                            onBlockMove: { block, newSlot in
+                                moveBlock(block, to: newSlot)
+                            },
+                            onBlockResize: { block, newSlot in
+                                resizeBlock(block, to: newSlot)
+                            }
+                        )
+                    }
                 }
-            }
-            .frame(minWidth: 400)
+                .frame(minWidth: 400)
 
-            // Right sidebar - Tasks
-            TaskSidebarView(selectedDate: $selectedDate)
-                .frame(minWidth: 250, maxWidth: 350)
+                // Right sidebar - Tasks
+                TaskSidebarView(selectedDate: $selectedDate)
+                    .frame(minWidth: 250, maxWidth: 350)
+            }
+
+            // Error banner overlay
+            if let error = currentError {
+                TimelineErrorBanner(error: error) {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        currentError = nil
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 60)
+                .zIndex(100)
+            }
         }
         .sheet(item: $editingBlock) { block in
             PlanBlockEditorSheet(
@@ -209,8 +224,12 @@ struct CalendarView: View {
                 to: newSlot.startAt,
                 endAt: newSlot.endAt
             )
+        } catch UpdatePlanBlockUseCase.Error.overlapsWithExisting {
+            showError(.overlap, message: "Cannot move here - overlaps with another block")
+        } catch UpdatePlanBlockUseCase.Error.invalidTimeSlot {
+            showError(.invalidTime, message: "Invalid time range")
         } catch {
-            print("Error moving block: \(error)")
+            showError(.invalidTime, message: error.localizedDescription)
         }
     }
 
@@ -221,8 +240,29 @@ struct CalendarView: View {
                 newStartAt: newSlot.startAt,
                 newEndAt: newSlot.endAt
             )
+        } catch UpdatePlanBlockUseCase.Error.overlapsWithExisting {
+            showError(.overlap, message: "Cannot resize - would overlap with another block")
+        } catch UpdatePlanBlockUseCase.Error.invalidTimeSlot {
+            showError(.invalidTime, message: "Invalid time range")
         } catch {
-            print("Error resizing block: \(error)")
+            showError(.invalidTime, message: error.localizedDescription)
+        }
+    }
+
+    // MARK: - Error Handling
+
+    private func showError(_ type: TimelineError.ErrorType, message: String) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            currentError = TimelineError(message: message, type: type)
+        }
+
+        // Auto-dismiss after 3 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            withAnimation(.easeOut(duration: 0.2)) {
+                if currentError?.message == message {
+                    currentError = nil
+                }
+            }
         }
     }
 }
@@ -236,6 +276,78 @@ enum DragState {
 
     enum Edge {
         case top, bottom
+    }
+}
+
+// MARK: - Timeline Error
+
+struct TimelineError: Identifiable, Equatable {
+    let id = UUID()
+    let message: String
+    let type: ErrorType
+
+    enum ErrorType {
+        case overlap
+        case invalidTime
+        case dayBoundary
+    }
+}
+
+// MARK: - Timeline Error Banner
+
+struct TimelineErrorBanner: View {
+    let error: TimelineError
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: iconName)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white)
+
+            Text(error.message)
+                .font(.callout)
+                .fontWeight(.medium)
+                .foregroundColor(.white)
+
+            Spacer()
+
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(backgroundColor)
+        .cornerRadius(10)
+        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        .transition(.asymmetric(
+            insertion: .move(edge: .top).combined(with: .opacity),
+            removal: .opacity
+        ))
+    }
+
+    private var iconName: String {
+        switch error.type {
+        case .overlap:
+            return "exclamationmark.triangle.fill"
+        case .invalidTime:
+            return "clock.badge.exclamationmark.fill"
+        case .dayBoundary:
+            return "calendar.badge.exclamationmark"
+        }
+    }
+
+    private var backgroundColor: Color {
+        switch error.type {
+        case .overlap:
+            return .orange
+        case .invalidTime, .dayBoundary:
+            return .red
+        }
     }
 }
 

@@ -216,3 +216,115 @@ final class TimeCalculator: Sendable {
         return dates(from: weekInterval.start, days: 7)
     }
 }
+
+// MARK: - Block Layout Info
+
+/// Layout information for a single block in an overlapping group
+struct BlockLayoutInfo {
+    let blockId: UUID
+    let column: Int        // 0-indexed column position
+    let totalColumns: Int  // Total columns in this overlap group
+}
+
+// MARK: - Overlap Layout Calculator
+
+/// Calculates column layout for overlapping time blocks
+/// Uses interval scheduling algorithm to assign blocks to columns
+final class OverlapLayoutCalculator {
+
+    /// Calculate layout for all blocks, returning column assignments
+    /// - Parameter blocks: Array of plan blocks to layout
+    /// - Returns: Dictionary mapping block IDs to their layout info
+    func calculateLayout(for blocks: [PlanBlockModel]) -> [UUID: BlockLayoutInfo] {
+        guard !blocks.isEmpty else { return [:] }
+
+        // Sort blocks by start time
+        let sortedBlocks = blocks.sorted { $0.startAt < $1.startAt }
+
+        // Group overlapping blocks
+        let groups = groupOverlappingBlocks(sortedBlocks)
+
+        // Assign columns within each group
+        var result: [UUID: BlockLayoutInfo] = [:]
+
+        for group in groups {
+            let columnAssignments = assignColumnsToGroup(group)
+            let totalColumns = columnAssignments.values.max().map { $0 + 1 } ?? 1
+
+            for block in group {
+                let column = columnAssignments[block.id] ?? 0
+                result[block.id] = BlockLayoutInfo(
+                    blockId: block.id,
+                    column: column,
+                    totalColumns: totalColumns
+                )
+            }
+        }
+
+        return result
+    }
+
+    // MARK: - Private Methods
+
+    /// Group blocks that overlap with each other
+    private func groupOverlappingBlocks(_ sortedBlocks: [PlanBlockModel]) -> [[PlanBlockModel]] {
+        var groups: [[PlanBlockModel]] = []
+        var currentGroup: [PlanBlockModel] = []
+        var groupEndTime: Date = .distantPast
+
+        for block in sortedBlocks {
+            if block.startAt < groupEndTime {
+                // This block overlaps with the current group
+                currentGroup.append(block)
+                groupEndTime = max(groupEndTime, block.endAt)
+            } else {
+                // No overlap - start a new group
+                if !currentGroup.isEmpty {
+                    groups.append(currentGroup)
+                }
+                currentGroup = [block]
+                groupEndTime = block.endAt
+            }
+        }
+
+        // Don't forget the last group
+        if !currentGroup.isEmpty {
+            groups.append(currentGroup)
+        }
+
+        return groups
+    }
+
+    /// Assign columns to blocks within a group using greedy scheduling
+    private func assignColumnsToGroup(_ group: [PlanBlockModel]) -> [UUID: Int] {
+        var columnAssignments: [UUID: Int] = [:]
+        var columnEndTimes: [Date] = []
+
+        // Process blocks in start time order
+        let sorted = group.sorted { $0.startAt < $1.startAt }
+
+        for block in sorted {
+            var assignedColumn: Int? = nil
+
+            // Find the first column where this block can fit
+            for (columnIndex, endTime) in columnEndTimes.enumerated() {
+                if block.startAt >= endTime {
+                    // Block can fit in this column
+                    assignedColumn = columnIndex
+                    columnEndTimes[columnIndex] = block.endAt
+                    break
+                }
+            }
+
+            if assignedColumn == nil {
+                // Need a new column
+                assignedColumn = columnEndTimes.count
+                columnEndTimes.append(block.endAt)
+            }
+
+            columnAssignments[block.id] = assignedColumn
+        }
+
+        return columnAssignments
+    }
+}
