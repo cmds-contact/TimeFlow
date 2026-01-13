@@ -1,0 +1,56 @@
+{
+  "task": "타임블록 버그 수정",
+  "date": "2026-01-13",
+  "commit": "5cb67e5",
+  "branch": "develop",
+  "status": "completed",
+  "bugs_fixed": [
+    {
+      "id": 1,
+      "title": "편집 시 시간 변경이 저장되지 않음",
+      "description": "PlanBlockEditorSheet에서 시간을 변경해도 UpdatePlanBlockUseCase에 전달되지 않아 저장되지 않던 문제",
+      "severity": "high",
+      "root_cause": "CalendarView.updateBlock()에서 startAt/endAt을 UseCase에 전달하지 않음",
+      "fix": "UpdatePlanBlockUseCase.execute()에 시간 파라미터 추가 및 CalendarView에서 전달",
+      "files_modified": [
+        "TimeFlow/Domain/UseCases/Calendar/UpdatePlanBlockUseCase.swift",
+        "TimeFlow/Features/Calendar/Views/CalendarView.swift"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "다른 날짜 선택 후 블록 생성 시 날짜 불일치",
+      "description": "내일 등 다른 날짜 선택 후 블록 생성 시 오늘 날짜 기준으로 시간이 초기화되던 문제",
+      "severity": "high",
+      "root_cause": "PlanBlockEditorSheet Creating mode에서 Date()를 사용하여 현재 날짜 기준 초기화",
+      "fix": "전달받은 date 파라미터 기반으로 시간 초기화하도록 수정",
+      "files_modified": [
+        "TimeFlow/Features/Calendar/Views/PlanBlockEditorSheet.swift"
+      ]
+    }
+  ],
+  "changes_summary": {
+    "files_changed": 3,
+    "insertions": 35,
+    "deletions": 3
+  },
+  "build_status": "success",
+  "test_status": "manual_testing_required",
+  "remaining_issues": [
+    {
+      "title": "ResizeHandle 드래그 기능 미구현",
+      "severity": "medium",
+      "description": "핸들이 표시되지만 실제 드래그 제스처가 연결되지 않음"
+    },
+    {
+      "title": "드래그 이동 시 날짜 경계 처리",
+      "severity": "low",
+      "description": "자정 경계를 넘어가는 드래그 이동 시 날짜 불일치 가능"
+    }
+  ],
+  "manual_test_checklist": [
+    "기존 블록 편집 → 시간 변경 → 저장 후 반영 확인",
+    "다른 날짜 선택 → New Block → DatePicker에서 선택된 날짜 시간 표시 확인",
+    "앱 재시작 후 변경사항 유지 확인"
+  ]
+}
