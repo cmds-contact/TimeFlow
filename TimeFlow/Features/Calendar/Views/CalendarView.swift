@@ -188,6 +188,8 @@ struct CalendarView: View {
         try appEnvironment.useCases.updatePlanBlock.execute(
             id: block.id,
             title: block.title,
+            startAt: block.startAt,
+            endAt: block.endAt,
             note: block.note,
             categoryId: block.categoryId,
             isFixed: block.isFixed

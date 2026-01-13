@@ -41,12 +41,33 @@ final class UpdatePlanBlockUseCase {
     func execute(
         id: UUID,
         title: String? = nil,
+        startAt: Date? = nil,
+        endAt: Date? = nil,
         note: String? = nil,
         categoryId: UUID? = nil,
         isFixed: Bool? = nil
     ) throws {
         guard let block = try repository.fetch(id: id) else {
             throw Error.blockNotFound
+        }
+
+        // Handle time changes with validation
+        if startAt != nil || endAt != nil {
+            let newStartAt = startAt ?? block.startAt
+            let newEndAt = endAt ?? block.endAt
+
+            // Validate time slot
+            guard timeCalculator.isValidSlot(startAt: newStartAt, endAt: newEndAt) else {
+                throw Error.invalidTimeSlot
+            }
+
+            // Check for overlaps (excluding this block)
+            if try repository.hasOverlap(date: block.date, startAt: newStartAt, endAt: newEndAt, excludingId: id) {
+                throw Error.overlapsWithExisting
+            }
+
+            block.startAt = newStartAt
+            block.endAt = newEndAt
         }
 
         if let title = title {
