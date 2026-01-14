@@ -1,0 +1,142 @@
+{
+  "project": "TimeFlow DayFlow UI/UX",
+  "createdAt": "2026-01-14",
+  "status": "in_progress",
+  "nextTasks": [
+    {
+      "id": 1,
+      "category": "xcode_setup",
+      "title": "Xcode 프로젝트에 새 파일 추가",
+      "priority": "critical",
+      "description": "새로 생성된 18개 파일을 Xcode 프로젝트에 추가",
+      "steps": [
+        "Xcode에서 File > Add Files to 'TimeFlow' 선택",
+        "DailyPlanItemModel.swift 추가",
+        "DailyPlanItemRepository.swift 추가",
+        "Domain/UseCases/DayFlow/ 폴더 전체 추가",
+        "Features/DayFlow/ 폴더 전체 추가",
+        "'Copy items if needed' 체크 해제",
+        "'Create groups' 선택 후 Add"
+      ]
+    },
+    {
+      "id": 2,
+      "category": "build_test",
+      "title": "빌드 및 컴파일 에러 수정",
+      "priority": "critical",
+      "description": "Xcode에서 빌드 후 발생하는 컴파일 에러 수정",
+      "steps": [
+        "Cmd+B로 빌드 실행",
+        "에러 메시지 확인",
+        "타입 참조 에러 수정",
+        "import 문 누락 확인"
+      ]
+    },
+    {
+      "id": 3,
+      "category": "ui_refinement",
+      "title": "Plan 페이지 UI 개선",
+      "priority": "high",
+      "description": "Plan 페이지의 테이블과 타임라인 UI 세부 조정",
+      "tasks": [
+        "테이블 행 높이 조정",
+        "드래그 정렬 애니메이션 개선",
+        "예상 시간 입력 UX 개선 (직접 입력 옵션)",
+        "통계 푸터 디자인 개선"
+      ]
+    },
+    {
+      "id": 4,
+      "category": "ui_refinement",
+      "title": "Work 페이지 타이머 기능 완성",
+      "priority": "high",
+      "description": "Work 페이지의 타이머 관련 기능 보완",
+      "tasks": [
+        "타이머 상태 실시간 업데이트 확인",
+        "Pomodoro 모드 연동 테스트",
+        "타이머 종료 시 Actual 블록 자동 생성 확인",
+        "읽기 전용 Plan 타임라인 스타일 개선"
+      ]
+    },
+    {
+      "id": 5,
+      "category": "ui_refinement",
+      "title": "Review 페이지 차트 개선",
+      "priority": "medium",
+      "description": "Review 페이지의 통계 및 차트 시각화 개선",
+      "tasks": [
+        "시간대별 비교 차트 추가",
+        "주간/월간 트렌드 뷰 추가",
+        "효율성 점수 계산 로직 개선",
+        "세션 히스토리 필터링 강화"
+      ]
+    },
+    {
+      "id": 6,
+      "category": "data_migration",
+      "title": "기존 데이터 마이그레이션 검토",
+      "priority": "medium",
+      "description": "기존 Calendar 데이터가 DayFlow에서 정상 표시되는지 확인",
+      "tasks": [
+        "기존 PlanBlock 데이터 호환성 확인",
+        "기존 ActualBlock 데이터 호환성 확인",
+        "SwiftData 마이그레이션 필요 여부 검토"
+      ]
+    },
+    {
+      "id": 7,
+      "category": "keyboard_shortcuts",
+      "title": "키보드 단축키 업데이트",
+      "priority": "low",
+      "description": "DayFlow 서브페이지 전환 단축키 추가",
+      "tasks": [
+        "Cmd+1: Plan 페이지",
+        "Cmd+2: Work 페이지",
+        "Cmd+3: Review 페이지",
+        "TimeFlowCommands에 단축키 등록"
+      ]
+    },
+    {
+      "id": 8,
+      "category": "cleanup",
+      "title": "기존 CalendarView 정리",
+      "priority": "low",
+      "description": "DayFlow 안정화 후 기존 CalendarView 코드 정리",
+      "tasks": [
+        "CalendarView.swift를 .trash로 이동 (삭제 금지)",
+        "관련 참조 제거",
+        "불필요한 코드 정리"
+      ]
+    }
+  ],
+  "filesCreated": {
+    "dataLayer": [
+      "TimeFlow/Data/SwiftData/Models/DailyPlanItemModel.swift",
+      "TimeFlow/Data/Repositories/DailyPlanItemRepository.swift"
+    ],
+    "useCases": [
+      "TimeFlow/Domain/UseCases/DayFlow/CreateDailyPlanItemUseCase.swift",
+      "TimeFlow/Domain/UseCases/DayFlow/UpdateDailyPlanItemUseCase.swift",
+      "TimeFlow/Domain/UseCases/DayFlow/DeleteDailyPlanItemUseCase.swift",
+      "TimeFlow/Domain/UseCases/DayFlow/ReorderDailyPlanItemsUseCase.swift",
+      "TimeFlow/Domain/UseCases/DayFlow/FetchDailyPlanItemsUseCase.swift",
+      "TimeFlow/Domain/UseCases/DayFlow/CalculateDailyPlanStatsUseCase.swift"
+    ],
+    "views": [
+      "TimeFlow/Features/DayFlow/Views/DayFlowView.swift",
+      "TimeFlow/Features/DayFlow/Views/Plan/PlanPageView.swift",
+      "TimeFlow/Features/DayFlow/Views/Plan/DailyPlanTableView.swift",
+      "TimeFlow/Features/DayFlow/Views/Plan/DailyPlanRowView.swift",
+      "TimeFlow/Features/DayFlow/Views/Plan/PlanStatsFooter.swift",
+      "TimeFlow/Features/DayFlow/Views/Work/WorkPageView.swift",
+      "TimeFlow/Features/DayFlow/Views/Review/ReviewPageView.swift",
+      "TimeFlow/Features/DayFlow/Views/Review/DailyStatsCard.swift",
+      "TimeFlow/Features/DayFlow/Views/Review/PlanVsActualChart.swift",
+      "TimeFlow/Features/DayFlow/Views/Review/SessionHistoryList.swift"
+    ]
+  },
+  "filesModified": [
+    "TimeFlow/App/ContentView.swift",
+    "TimeFlow/App/AppEnvironment.swift"
+  ]
+}

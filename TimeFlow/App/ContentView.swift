@@ -4,17 +4,17 @@ import SwiftData
 /// Main content view with tab-based navigation
 struct ContentView: View {
     @EnvironmentObject private var appEnvironment: AppEnvironment
-    @State private var selectedTab: Tab = .calendar
+    @State private var selectedTab: Tab = .dayflow
     @State private var selectedDate: Date = Date()
 
     enum Tab: String, CaseIterable {
-        case calendar = "Calendar"
+        case dayflow = "DayFlow"
         case tasks = "Tasks"
         case focus = "Focus"
 
         var icon: String {
             switch self {
-            case .calendar: return "calendar"
+            case .dayflow: return "clock.arrow.2.circlepath"
             case .tasks: return "checklist"
             case .focus: return "timer"
             }
@@ -36,7 +36,7 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .navigateToToday)) { _ in
             selectedDate = Date()
-            selectedTab = .calendar
+            selectedTab = .dayflow
         }
     }
 
@@ -59,8 +59,8 @@ struct ContentView: View {
     @ViewBuilder
     private var detailContent: some View {
         switch selectedTab {
-        case .calendar:
-            CalendarView(selectedDate: $selectedDate)
+        case .dayflow:
+            DayFlowView(selectedDate: $selectedDate)
         case .tasks:
             TaskListView(selectedDate: $selectedDate)
         case .focus:

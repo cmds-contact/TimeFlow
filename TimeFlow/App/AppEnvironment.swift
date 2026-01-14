@@ -34,6 +34,10 @@ final class AppEnvironment: ObservableObject {
         PomodoroRepository(modelContext: modelContainer.mainContext)
     }()
 
+    private(set) lazy var dailyPlanItemRepository: DailyPlanItemRepository = {
+        DailyPlanItemRepository(modelContext: modelContainer.mainContext)
+    }()
+
     // Services
     private(set) lazy var timerService: TimerService = {
         TimerService(
@@ -49,6 +53,7 @@ final class AppEnvironment: ObservableObject {
             actualBlockRepository: actualBlockRepository,
             taskRepository: taskRepository,
             pomodoroRepository: pomodoroRepository,
+            dailyPlanItemRepository: dailyPlanItemRepository,
             timerService: timerService,
             timeCalculator: timeCalculator,
             userSettings: userSettings
@@ -64,7 +69,8 @@ final class AppEnvironment: ObservableObject {
             ActualBlockModel.self,
             TaskItemModel.self,
             PomodoroSessionModel.self,
-            CategoryModel.self
+            CategoryModel.self,
+            DailyPlanItemModel.self
         ])
 
         let modelConfiguration = ModelConfiguration(
@@ -125,11 +131,20 @@ struct UseCases {
     let stopPomodoro: StopPomodoroUseCase
     let completeCycle: CompleteCycleUseCase
 
+    // DayFlow
+    let createDailyPlanItem: CreateDailyPlanItemUseCase
+    let updateDailyPlanItem: UpdateDailyPlanItemUseCase
+    let deleteDailyPlanItem: DeleteDailyPlanItemUseCase
+    let reorderDailyPlanItems: ReorderDailyPlanItemsUseCase
+    let fetchDailyPlanItems: FetchDailyPlanItemsUseCase
+    let calculateDailyPlanStats: CalculateDailyPlanStatsUseCase
+
     init(
         planBlockRepository: PlanBlockRepository,
         actualBlockRepository: ActualBlockRepository,
         taskRepository: TaskRepository,
         pomodoroRepository: PomodoroRepository,
+        dailyPlanItemRepository: DailyPlanItemRepository,
         timerService: TimerService,
         timeCalculator: TimeCalculator,
         userSettings: UserSettings
@@ -194,6 +209,27 @@ struct UseCases {
             repository: pomodoroRepository,
             actualBlockRepository: actualBlockRepository,
             timerService: timerService,
+            settings: userSettings
+        )
+
+        // DayFlow UseCases
+        self.createDailyPlanItem = CreateDailyPlanItemUseCase(
+            repository: dailyPlanItemRepository
+        )
+        self.updateDailyPlanItem = UpdateDailyPlanItemUseCase(
+            repository: dailyPlanItemRepository
+        )
+        self.deleteDailyPlanItem = DeleteDailyPlanItemUseCase(
+            repository: dailyPlanItemRepository
+        )
+        self.reorderDailyPlanItems = ReorderDailyPlanItemsUseCase(
+            repository: dailyPlanItemRepository
+        )
+        self.fetchDailyPlanItems = FetchDailyPlanItemsUseCase(
+            repository: dailyPlanItemRepository
+        )
+        self.calculateDailyPlanStats = CalculateDailyPlanStatsUseCase(
+            repository: dailyPlanItemRepository,
             settings: userSettings
         )
     }
