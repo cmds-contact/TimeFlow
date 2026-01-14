@@ -9,11 +9,65 @@ struct PlanVsActualChart: View {
         max(plannedMinutes, actualMinutes, 60)
     }
 
+    private var efficiencyScore: Int {
+        guard plannedMinutes > 0 else { return actualMinutes > 0 ? 100 : 0 }
+        let ratio = Double(actualMinutes) / Double(plannedMinutes)
+        // Score is highest when ratio is close to 1.0
+        // Penalty for both under and over
+        if ratio >= 0.9 && ratio <= 1.1 {
+            return 100
+        } else if ratio < 0.9 {
+            return max(0, Int(ratio * 100))
+        } else {
+            // Over-time penalty
+            return max(0, 100 - Int((ratio - 1.0) * 50))
+        }
+    }
+
+    private var varianceText: String {
+        let diff = actualMinutes - plannedMinutes
+        if diff == 0 {
+            return "On track"
+        } else if diff > 0 {
+            return "+\(formatMinutes(diff)) over"
+        } else {
+            return "\(formatMinutes(-diff)) under"
+        }
+    }
+
+    private var varianceColor: Color {
+        let diff = actualMinutes - plannedMinutes
+        if abs(diff) <= plannedMinutes / 10 { // within 10%
+            return .green
+        } else if diff < 0 {
+            return .orange
+        } else {
+            return .red
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header
-            Text("Plan vs Actual")
-                .font(.headline)
+            // Header with efficiency score
+            HStack {
+                Text("Plan vs Actual")
+                    .font(.headline)
+
+                Spacer()
+
+                // Efficiency badge
+                HStack(spacing: 4) {
+                    Image(systemName: efficiencyIcon)
+                        .font(.caption)
+                    Text("\(efficiencyScore)%")
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                }
+                .foregroundColor(efficiencyColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(efficiencyColor.opacity(0.1))
+                .cornerRadius(8)
+            }
 
             // Chart
             VStack(spacing: 12) {
@@ -32,17 +86,42 @@ struct PlanVsActualChart: View {
                 )
             }
 
-            // Legend
-            HStack(spacing: 20) {
-                legendItem(color: .blue, label: "Planned")
-                legendItem(color: .green, label: "Actual")
+            // Variance indicator
+            HStack {
+                // Legend
+                HStack(spacing: 20) {
+                    legendItem(color: .blue, label: "Planned")
+                    legendItem(color: .green, label: "Actual")
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+                Spacer()
+
+                // Variance
+                Text(varianceText)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(varianceColor)
             }
-            .font(.caption)
-            .foregroundColor(.secondary)
         }
         .padding()
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(12)
+    }
+
+    private var efficiencyIcon: String {
+        if efficiencyScore >= 90 { return "checkmark.seal.fill" }
+        else if efficiencyScore >= 70 { return "checkmark.circle.fill" }
+        else if efficiencyScore >= 50 { return "exclamationmark.circle.fill" }
+        else { return "xmark.circle.fill" }
+    }
+
+    private var efficiencyColor: Color {
+        if efficiencyScore >= 90 { return .green }
+        else if efficiencyScore >= 70 { return .blue }
+        else if efficiencyScore >= 50 { return .orange }
+        else { return .red }
     }
 
     // MARK: - Chart Bar

@@ -139,6 +139,22 @@ struct DayFlowView: View {
         .onReceive(NotificationCenter.default.publisher(for: .deleteSelectedBlock)) { _ in
             deleteSelectedBlock()
         }
+        // DayFlow subpage keyboard shortcuts
+        .onReceive(NotificationCenter.default.publisher(for: .dayFlowSwitchToPlan)) { _ in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                subPage = .plan
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .dayFlowSwitchToWork)) { _ in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                subPage = .work
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .dayFlowSwitchToReview)) { _ in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                subPage = .review
+            }
+        }
     }
 
     // MARK: - Toolbar

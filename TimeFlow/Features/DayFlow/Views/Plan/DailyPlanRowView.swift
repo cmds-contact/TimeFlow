@@ -11,9 +11,15 @@ struct DailyPlanRowView: View {
 
     @State private var editTitle: String = ""
     @State private var editMinutes: Int = 30
+    @State private var isHovering: Bool = false
 
     var body: some View {
         HStack(spacing: 12) {
+            // Drag handle indicator
+            Image(systemName: "line.3.horizontal")
+                .font(.caption)
+                .foregroundColor(.secondary.opacity(isHovering ? 0.8 : 0.3))
+
             // Checkbox
             Button(action: onToggleCompletion) {
                 Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
@@ -28,8 +34,18 @@ struct DailyPlanRowView: View {
                 normalContent
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isHovering ? Color.secondary.opacity(0.08) : Color.clear)
+        )
         .contentShape(Rectangle())
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovering = hovering
+            }
+        }
         .onTapGesture(count: 2) {
             startEditing()
         }
@@ -69,26 +85,66 @@ struct DailyPlanRowView: View {
 
     // MARK: - Editing Content
 
+    @State private var customMinutesText: String = ""
+    @State private var useCustomMinutes: Bool = false
+
     private var editingContent: some View {
-        HStack {
+        HStack(spacing: 8) {
             TextField("Title", text: $editTitle)
                 .textFieldStyle(.roundedBorder)
 
-            Picker("", selection: $editMinutes) {
-                Text("15m").tag(15)
-                Text("30m").tag(30)
-                Text("45m").tag(45)
-                Text("1h").tag(60)
-                Text("1.5h").tag(90)
-                Text("2h").tag(120)
-                Text("3h").tag(180)
+            // Time picker with custom option
+            HStack(spacing: 4) {
+                if useCustomMinutes {
+                    HStack(spacing: 2) {
+                        TextField("", text: $customMinutesText)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 50)
+                            .onChange(of: customMinutesText) { _, newValue in
+                                if let minutes = Int(newValue), minutes > 0 {
+                                    editMinutes = minutes
+                                }
+                            }
+                        Text("m")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    Picker("", selection: $editMinutes) {
+                        Text("15m").tag(15)
+                        Text("30m").tag(30)
+                        Text("45m").tag(45)
+                        Text("1h").tag(60)
+                        Text("1.5h").tag(90)
+                        Text("2h").tag(120)
+                        Text("3h").tag(180)
+                    }
+                    .frame(width: 70)
+                }
+
+                Button(action: {
+                    useCustomMinutes.toggle()
+                    if useCustomMinutes {
+                        customMinutesText = "\(editMinutes)"
+                    }
+                }) {
+                    Image(systemName: useCustomMinutes ? "list.bullet" : "pencil")
+                        .font(.caption)
+                }
+                .buttonStyle(.borderless)
+                .help(useCustomMinutes ? "Use preset times" : "Enter custom time")
             }
-            .frame(width: 70)
 
             Button("Done") {
                 onEndEditing(editTitle, editMinutes)
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.small)
+
+            Button("Cancel") {
+                onEndEditing(item.title, item.estimatedMinutes)
+            }
+            .buttonStyle(.bordered)
             .controlSize(.small)
         }
     }

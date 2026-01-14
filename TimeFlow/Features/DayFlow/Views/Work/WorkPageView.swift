@@ -34,39 +34,62 @@ struct WorkPageView: View {
 
             // Dual timeline
             HSplitView {
-                // Left - Plan blocks (read-only)
+                // Left - Plan blocks (read-only reference)
                 VStack(spacing: 0) {
                     HStack {
                         Label("Today's Plan", systemImage: "list.bullet.clipboard")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+
                         Spacer()
+
+                        // Plan summary
+                        Text("\(planBlocks.count) blocks")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(Color.secondary.opacity(0.1))
+                            .cornerRadius(4)
                     }
                     .padding(.horizontal)
                     .padding(.vertical, 8)
 
                     Divider()
 
-                    ScrollView {
-                        TimelineGridView(
-                            date: selectedDate,
-                            planBlocks: planBlocks,
-                            actualBlocks: [],
-                            displayMode: .planOnly,
-                            hourHeight: appEnvironment.userSettings.hourHeight,
-                            onBlockTap: { _ in },
-                            onActualBlockTap: { _ in },
-                            onEmptySlotTap: { _ in },
-                            onBlockMove: { _, _ in },
-                            onBlockResize: { _, _ in }
-                        )
-                        .environmentObject(appEnvironment.selectionState)
+                    ZStack {
+                        // Watermark overlay
+                        Text("REFERENCE")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundColor(.secondary.opacity(0.08))
+                            .rotationEffect(.degrees(-15))
+
+                        ScrollView {
+                            TimelineGridView(
+                                date: selectedDate,
+                                planBlocks: planBlocks,
+                                actualBlocks: [],
+                                displayMode: .planOnly,
+                                hourHeight: appEnvironment.userSettings.hourHeight,
+                                onBlockTap: { _ in },
+                                onActualBlockTap: { _ in },
+                                onEmptySlotTap: { _ in },
+                                onBlockMove: { _, _ in },
+                                onBlockResize: { _, _ in }
+                            )
+                            .environmentObject(appEnvironment.selectionState)
+                        }
+                        .allowsHitTesting(false)
                     }
-                    .allowsHitTesting(false)
-                    .opacity(0.7)
                 }
                 .frame(minWidth: 300)
-                .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+                .background(
+                    ZStack {
+                        Color(NSColor.controlBackgroundColor)
+                        // Subtle diagonal stripes pattern to indicate read-only
+                        Color.secondary.opacity(0.02)
+                    }
+                )
 
                 // Right - Actual blocks (editable)
                 VStack(spacing: 0) {

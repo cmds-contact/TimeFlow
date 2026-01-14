@@ -96,23 +96,36 @@ struct DailyPlanTableView: View {
                     item: item,
                     isEditing: editingItemId == item.id,
                     onToggleCompletion: {
-                        toggleCompletion(item)
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            toggleCompletion(item)
+                        }
                     },
                     onStartEditing: {
-                        editingItemId = item.id
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            editingItemId = item.id
+                        }
                     },
                     onEndEditing: { title, minutes in
-                        updateItem(item, title: title, minutes: minutes)
-                        editingItemId = nil
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            updateItem(item, title: title, minutes: minutes)
+                            editingItemId = nil
+                        }
                     },
                     onDelete: {
-                        deleteItem(item)
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            deleteItem(item)
+                        }
                     }
                 )
+                .transition(.asymmetric(
+                    insertion: .move(edge: .top).combined(with: .opacity),
+                    removal: .move(edge: .trailing).combined(with: .opacity)
+                ))
             }
             .onMove(perform: moveItems)
         }
         .listStyle(.plain)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: items.map(\.id))
     }
 
     // MARK: - Add Item Form

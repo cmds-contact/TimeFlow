@@ -76,7 +76,7 @@ struct SessionHistoryList: View {
             } else {
                 VStack(spacing: 8) {
                     ForEach(filteredItems) { item in
-                        SessionHistoryRow(item: item)
+                        DayFlowSessionRow(item: item)
                     }
                 }
             }
@@ -143,7 +143,7 @@ struct SessionHistoryItem: Identifiable {
 
 // MARK: - Session History Row
 
-struct SessionHistoryRow: View {
+struct DayFlowSessionRow: View {
     let item: SessionHistoryItem
 
     var body: some View {
