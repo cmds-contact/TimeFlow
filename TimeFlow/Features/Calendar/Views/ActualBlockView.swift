@@ -6,6 +6,7 @@ struct ActualBlockView: View {
     let hourHeight: Double
     let baseDate: Date
     let isOverlay: Bool
+    var isSelected: Bool = false
 
     @State private var isHovered = false
 
@@ -56,8 +57,8 @@ struct ActualBlockView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 4)
                 .strokeBorder(
-                    isHovered ? Color.green : Color.green.opacity(0.5),
-                    lineWidth: 1
+                    isSelected ? Color.green : (isHovered ? Color.green : Color.green.opacity(0.5)),
+                    lineWidth: isSelected ? 3 : 1
                 )
         )
         .offset(x: isOverlay ? 70 : 58, y: yPosition)
@@ -71,7 +72,13 @@ struct ActualBlockView: View {
     // MARK: - Background
 
     private var blockBackground: some View {
-        Color.green.opacity(isHovered ? 0.25 : 0.15)
+        Group {
+            if isSelected {
+                Color.green.opacity(0.35)
+            } else {
+                Color.green.opacity(isHovered ? 0.25 : 0.15)
+            }
+        }
     }
 }
 

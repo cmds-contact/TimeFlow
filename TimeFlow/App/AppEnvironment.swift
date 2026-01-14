@@ -11,6 +11,12 @@ final class AppEnvironment: ObservableObject {
     let userSettings: UserSettings
     let timeCalculator: TimeCalculator
 
+    /// Selection state for block selection across the calendar
+    @Published var selectionState = SelectionState()
+
+    /// Undo manager for undo/redo support
+    let undoManager = UndoManager()
+
     // Repositories
     private(set) lazy var planBlockRepository: PlanBlockRepository = {
         PlanBlockRepository(modelContext: modelContainer.mainContext)
@@ -101,6 +107,8 @@ struct UseCases {
     let startTracking: StartTrackingUseCase
     let stopTracking: StopTrackingUseCase
     let createActualBlock: CreateActualBlockUseCase
+    let updateActualBlock: UpdateActualBlockUseCase
+    let deleteActualBlock: DeleteActualBlockUseCase
     let linkActualToPlan: LinkActualToPlanUseCase
 
     // Tasks
@@ -147,6 +155,12 @@ struct UseCases {
         self.createActualBlock = CreateActualBlockUseCase(
             repository: actualBlockRepository,
             timeCalculator: timeCalculator
+        )
+        self.updateActualBlock = UpdateActualBlockUseCase(
+            repository: actualBlockRepository
+        )
+        self.deleteActualBlock = DeleteActualBlockUseCase(
+            repository: actualBlockRepository
         )
         self.linkActualToPlan = LinkActualToPlanUseCase(
             actualRepository: actualBlockRepository,

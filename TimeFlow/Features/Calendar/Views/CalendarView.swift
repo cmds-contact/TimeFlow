@@ -9,7 +9,6 @@ struct CalendarView: View {
 
     @State private var displayMode: DisplayMode = .overlay
     @State private var isCreatingBlock = false
-    @State private var editingBlock: PlanBlockModel?
     @State private var dragState: DragState = .idle
     @State private var currentError: TimelineError?
 
@@ -52,7 +51,10 @@ struct CalendarView: View {
                             displayMode: displayMode,
                             hourHeight: appEnvironment.userSettings.hourHeight,
                             onBlockTap: { block in
-                                editingBlock = block
+                                appEnvironment.selectionState.selectPlan(block)
+                            },
+                            onActualBlockTap: { block in
+                                appEnvironment.selectionState.selectActual(block)
                             },
                             onEmptySlotTap: { slot in
                                 createBlock(at: slot)
@@ -64,12 +66,14 @@ struct CalendarView: View {
                                 resizeBlock(block, to: newSlot)
                             }
                         )
+                        .environmentObject(appEnvironment.selectionState)
                     }
                 }
                 .frame(minWidth: 400)
 
-                // Right sidebar - Tasks
-                TaskSidebarView(selectedDate: $selectedDate)
+                // Right sidebar - Block detail or Tasks
+                RightSidebarView(selectedDate: $selectedDate)
+                    .environmentObject(appEnvironment.selectionState)
                     .frame(minWidth: 250, maxWidth: 350)
             }
 
@@ -84,13 +88,6 @@ struct CalendarView: View {
                 .padding(.top, 60)
                 .zIndex(100)
             }
-        }
-        .sheet(item: $editingBlock) { block in
-            PlanBlockEditorSheet(
-                block: block,
-                onSave: { try? updateBlock(block) },
-                onDelete: { try? deleteBlock(block) }
-            )
         }
         .sheet(isPresented: $isCreatingBlock) {
             PlanBlockEditorSheet(
@@ -108,6 +105,79 @@ struct CalendarView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .createNewPlanBlock)) { _ in
             isCreatingBlock = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .deleteSelectedBlock)) { _ in
+            deleteSelectedBlock()
+        }
+    }
+
+    // MARK: - Delete Selected Block
+
+    private func deleteSelectedBlock() {
+        if let block = appEnvironment.selectionState.selectedPlanBlock {
+            // Save block data for undo
+            let blockData = (
+                date: block.date,
+                startAt: block.startAt,
+                endAt: block.endAt,
+                title: block.title,
+                note: block.note,
+                categoryId: block.categoryId,
+                isFixed: block.isFixed
+            )
+
+            do {
+                try appEnvironment.useCases.deletePlanBlock.execute(id: block.id)
+                appEnvironment.selectionState.clearSelection()
+
+                // Register undo action
+                appEnvironment.undoManager.registerUndo(withTarget: appEnvironment) { env in
+                    do {
+                        _ = try env.useCases.createPlanBlock.execute(
+                            date: blockData.date,
+                            startAt: blockData.startAt,
+                            endAt: blockData.endAt,
+                            title: blockData.title,
+                            note: blockData.note,
+                            categoryId: blockData.categoryId,
+                            isFixed: blockData.isFixed
+                        )
+                    } catch {
+                        print("Error restoring plan block: \(error)")
+                    }
+                }
+                appEnvironment.undoManager.setActionName("Delete Block")
+            } catch {
+                print("Error deleting plan block: \(error)")
+            }
+        } else if let block = appEnvironment.selectionState.selectedActualBlock {
+            // Save block data for undo
+            let blockData = (
+                startAt: block.startAt,
+                endAt: block.endAt,
+                title: block.title
+            )
+
+            do {
+                try appEnvironment.useCases.deleteActualBlock.execute(id: block.id)
+                appEnvironment.selectionState.clearSelection()
+
+                // Register undo action
+                appEnvironment.undoManager.registerUndo(withTarget: appEnvironment) { env in
+                    do {
+                        _ = try env.useCases.createActualBlock.execute(
+                            startAt: blockData.startAt,
+                            endAt: blockData.endAt,
+                            title: blockData.title
+                        )
+                    } catch {
+                        print("Error restoring actual block: \(error)")
+                    }
+                }
+                appEnvironment.undoManager.setActionName("Delete Block")
+            } catch {
+                print("Error deleting actual block: \(error)")
+            }
         }
     }
 
@@ -218,12 +288,11 @@ struct CalendarView: View {
             categoryId: block.categoryId,
             isFixed: block.isFixed
         )
-        editingBlock = nil
     }
 
     private func deleteBlock(_ block: PlanBlockModel) throws {
         try appEnvironment.useCases.deletePlanBlock.execute(id: block.id)
-        editingBlock = nil
+        appEnvironment.selectionState.clearSelection()
     }
 
     private func moveBlock(_ block: PlanBlockModel, to newSlot: TimeSlot) {

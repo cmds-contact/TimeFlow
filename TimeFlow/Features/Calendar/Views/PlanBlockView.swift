@@ -6,6 +6,7 @@ struct PlanBlockView: View {
     let hourHeight: Double
     let baseDate: Date
     let isDragging: Bool
+    var isSelected: Bool = false
     var columnIndex: Int = 0
     var totalColumns: Int = 1
     var availableWidth: CGFloat = 280
@@ -109,8 +110,8 @@ struct PlanBlockView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 6)
                 .strokeBorder(
-                    isDragging ? Color.accentColor : Color.clear,
-                    lineWidth: 2
+                    isSelected ? Color.accentColor : (isDragging ? Color.accentColor : Color.clear),
+                    lineWidth: isSelected ? 3 : 2
                 )
         )
         .shadow(color: isDragging ? .black.opacity(0.2) : .clear, radius: 4, y: 2)
@@ -125,7 +126,9 @@ struct PlanBlockView: View {
 
     private var blockBackground: some View {
         Group {
-            if block.isFixed {
+            if isSelected {
+                Color.accentColor.opacity(0.35)
+            } else if block.isFixed {
                 Color.orange.opacity(0.3)
             } else {
                 Color.accentColor.opacity(isHovered ? 0.25 : 0.15)

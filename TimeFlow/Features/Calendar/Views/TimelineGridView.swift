@@ -50,9 +50,12 @@ struct TimelineGridView: View {
     let hourHeight: Double
 
     let onBlockTap: (PlanBlockModel) -> Void
+    let onActualBlockTap: (ActualBlockModel) -> Void
     let onEmptySlotTap: (TimeSlot) -> Void
     let onBlockMove: (PlanBlockModel, TimeSlot) -> Void
     let onBlockResize: (PlanBlockModel, TimeSlot) -> Void
+
+    @EnvironmentObject private var selectionState: SelectionState
 
     @State private var hoveredHour: Int?
     @State private var dragState: TimelineDragState = .idle
@@ -85,6 +88,10 @@ struct TimelineGridView: View {
                 .onTapGesture {
                     // Handle tap only if not dragging
                     guard dragState == .idle else { return }
+
+                    // Clear selection when tapping empty area
+                    selectionState.clearSelection()
+
                     // Tap creates 1-hour block at the tapped hour
                     if let hour = hoveredHour {
                         let startTime = date.withTime(hour: hour, minute: 0)
@@ -120,6 +127,7 @@ struct TimelineGridView: View {
                             hourHeight: hourHeight,
                             baseDate: date,
                             isDragging: isBeingDragged,
+                            isSelected: selectionState.isPlanBlockSelected(block),
                             columnIndex: layout?.column ?? 0,
                             totalColumns: layout?.totalColumns ?? 1,
                             availableWidth: geometry.size.width - 66, // 58 (label) + 8 (padding)
@@ -153,8 +161,12 @@ struct TimelineGridView: View {
                             block: block,
                             hourHeight: hourHeight,
                             baseDate: date,
-                            isOverlay: displayMode == .overlay
+                            isOverlay: displayMode == .overlay,
+                            isSelected: selectionState.isActualBlockSelected(block)
                         )
+                        .onTapGesture {
+                            onActualBlockTap(block)
+                        }
                     }
                 }
             }
@@ -438,9 +450,11 @@ struct MovePreviewView: View {
             displayMode: .overlay,
             hourHeight: 60,
             onBlockTap: { _ in },
+            onActualBlockTap: { _ in },
             onEmptySlotTap: { _ in },
             onBlockMove: { _, _ in },
             onBlockResize: { _, _ in }
         )
+        .environmentObject(SelectionState())
     }
 }

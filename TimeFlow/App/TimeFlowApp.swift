@@ -55,6 +55,14 @@ struct TimeFlowCommands: Commands {
             }
             .keyboardShortcut("t", modifiers: [.command, .shift])
         }
+
+        // Edit menu - Delete selected block
+        CommandGroup(after: .pasteboard) {
+            Button("Delete Selected Block") {
+                NotificationCenter.default.post(name: .deleteSelectedBlock, object: nil)
+            }
+            .keyboardShortcut(.delete, modifiers: [])
+        }
     }
 }
 
@@ -64,4 +72,5 @@ extension Notification.Name {
     static let createNewTask = Notification.Name("createNewTask")
     static let startFocus = Notification.Name("startFocus")
     static let navigateToToday = Notification.Name("navigateToToday")
+    static let deleteSelectedBlock = Notification.Name("deleteSelectedBlock")
 }
