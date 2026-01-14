@@ -49,9 +49,18 @@ struct PlanBlockEditorSheet: View {
 
         let now = Date()
         let calendar = Calendar.current
-        let startOfHour = calendar.date(
-            from: calendar.dateComponents([.year, .month, .day, .hour], from: now)
-        ) ?? now
+
+        // Use selected date for time initialization, not current date
+        let currentHour: Int
+        if calendar.isDate(date, inSameDayAs: now) {
+            // If today, use current hour
+            currentHour = calendar.component(.hour, from: now)
+        } else {
+            // If different date, use 9 AM as default
+            currentHour = 9
+        }
+
+        let startOfHour = date.withTime(hour: currentHour, minute: 0)
         let endOfHour = startOfHour.adding(hours: 1)
 
         _title = State(initialValue: "")
