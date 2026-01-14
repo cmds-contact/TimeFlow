@@ -63,3 +63,9 @@ Thumbs.db
 
 # Crash logs
 *.crash
+
+# Project trash
+.trash/
+
+# Debug
+CmdTrace/

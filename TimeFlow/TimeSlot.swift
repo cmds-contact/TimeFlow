@@ -18,11 +18,6 @@ struct TimeSlot: Equatable, Hashable, Codable, Sendable {
         Int(duration / 60)
     }
 
-    /// Duration in hours (as decimal)
-    var durationHours: Double {
-        duration / 3600
-    }
-
     /// Check if the time slot is valid (end > start)
     var isValid: Bool {
         endAt > startAt
@@ -56,46 +51,12 @@ struct TimeSlot: Equatable, Hashable, Codable, Sendable {
 
     /// Check if this slot overlaps with another slot
     func overlaps(with other: TimeSlot) -> Bool {
-        // Two slots overlap if neither ends before the other starts
         return startAt < other.endAt && other.startAt < endAt
     }
 
     /// Check if this slot contains a specific date
     func contains(_ date: Date) -> Bool {
         date >= startAt && date <= endAt
-    }
-
-    /// Check if this slot completely contains another slot
-    func contains(_ other: TimeSlot) -> Bool {
-        startAt <= other.startAt && endAt >= other.endAt
-    }
-
-    /// Get the intersection of two time slots, if they overlap
-    func intersection(with other: TimeSlot) -> TimeSlot? {
-        guard overlaps(with: other) else { return nil }
-
-        let intersectionStart = max(startAt, other.startAt)
-        let intersectionEnd = min(endAt, other.endAt)
-
-        return TimeSlot(startAt: intersectionStart, endAt: intersectionEnd)
-    }
-
-    /// Move the slot by a given time interval
-    func moved(by interval: TimeInterval) -> TimeSlot {
-        TimeSlot(
-            startAt: startAt.addingTimeInterval(interval),
-            endAt: endAt.addingTimeInterval(interval)
-        )
-    }
-
-    /// Extend or shrink the slot's start time
-    func withStart(_ newStart: Date) -> TimeSlot {
-        TimeSlot(startAt: newStart, endAt: endAt)
-    }
-
-    /// Extend or shrink the slot's end time
-    func withEnd(_ newEnd: Date) -> TimeSlot {
-        TimeSlot(startAt: startAt, endAt: newEnd)
     }
 
     /// Round start and end times to the nearest interval (in minutes)
@@ -110,16 +71,6 @@ struct TimeSlot: Equatable, Hashable, Codable, Sendable {
         )
 
         return TimeSlot(startAt: roundedStart, endAt: roundedEnd)
-    }
-}
-
-// MARK: - CustomStringConvertible
-
-extension TimeSlot: CustomStringConvertible {
-    var description: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return "\(formatter.string(from: startAt)) - \(formatter.string(from: endAt))"
     }
 }
 
